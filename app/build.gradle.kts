@@ -4,6 +4,12 @@ plugins {
     kotlin("plugin.serialization").version("1.9.21")
 }
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
 android {
     namespace = "com.example.safediary"
     compileSdk = 34
@@ -70,11 +76,15 @@ dependencies {
     implementation("io.ktor:ktor-client-android:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+    implementation("androidx.navigation:navigation-runtime-ktx:2.7.6")
+    implementation("androidx.navigation:navigation-compose:2.7.6")
+    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
@@ -85,5 +95,6 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.3.1")
     implementation("androidx.camera:camera-view:1.3.1")
     implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
+    implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc01")
 
 }

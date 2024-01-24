@@ -1,22 +1,17 @@
 package com.example.safediary
 
 import android.graphics.Bitmap
-import android.graphics.ImageDecoder
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
-import com.google.mlkit.vision.face.FaceDetectorOptions.CLASSIFICATION_MODE_ALL
-import com.google.mlkit.vision.face.FaceDetectorOptions.CONTOUR_MODE_ALL
 import com.google.mlkit.vision.face.FaceDetectorOptions.LANDMARK_MODE_NONE
 import com.google.mlkit.vision.face.FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE
-import com.google.mlkit.vision.face.FaceDetectorOptions.PERFORMANCE_MODE_FAST
 
-class FaceAnalyzer(private val callBack : FaceAnalyzerCallback) : ImageAnalysis.Analyzer {
+class FaceAnalyzer(private val callBack: FaceAnalyzerCallback) : ImageAnalysis.Analyzer {
 
     private val realTimeOpts = FaceDetectorOptions.Builder()
         .setPerformanceMode(PERFORMANCE_MODE_ACCURATE)
@@ -26,28 +21,34 @@ class FaceAnalyzer(private val callBack : FaceAnalyzerCallback) : ImageAnalysis.
 
     private val detector = FaceDetection.getClient(realTimeOpts)
 
-    @OptIn(ExperimentalGetImage::class) override fun analyze(imageProxy: ImageProxy) {
+    @OptIn(ExperimentalGetImage::class)
+    override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         val bitmap = imageProxy.toBitmap()
         val originalWidth = bitmap.width
         val originalHeight = bitmap.height
 
-        val newWidth = (originalWidth * 0.3).toInt()
-        val newHeight = (originalHeight * 0.3).toInt()
+        val newWidth = (originalWidth * IMAGE_SIZE_MODIFIER).toInt()
+        val newHeight = (originalHeight * IMAGE_SIZE_MODIFIER).toInt()
 
-        val left = (originalWidth - newWidth) / 2
-        val top = (originalHeight - newHeight) / 2
+        val left = (originalWidth - newWidth) / IMAGE_POSITION_MODIFIER
+        val top = (originalHeight - newHeight) / IMAGE_POSITION_MODIFIER
 
         val croppedBitmap = Bitmap.createBitmap(bitmap, left, top, newWidth, newHeight)
 
         mediaImage?.let {
-            val inputImage = InputImage.fromBitmap(croppedBitmap, imageProxy.imageInfo.rotationDegrees)
+            val inputImage =
+                InputImage.fromBitmap(croppedBitmap, imageProxy.imageInfo.rotationDegrees)
             detector.process(inputImage)
                 .addOnSuccessListener { faces ->
                     if (faces.isNotEmpty()) {
-                        val fullSizeFaces = faces.filter { it.boundingBox.height() > 125 && it.boundingBox.width() > 125 }
+                        val fullSizeFaces =
+                            faces.filter {
+                                it.boundingBox.height() > FACE_SIZE_RESTRICTION
+                                        && it.boundingBox.width() > FACE_SIZE_RESTRICTION
+                            }
                         if (fullSizeFaces.isNotEmpty()) {
-                            callBack.processFace(faces)
+                            callBack.processFace(bitmap)
                         }
                     }
                     imageProxy.close()
@@ -61,9 +62,15 @@ class FaceAnalyzer(private val callBack : FaceAnalyzerCallback) : ImageAnalysis.
                 }
         }
     }
+
+    companion object {
+        private const val IMAGE_SIZE_MODIFIER = 0.3
+        private const val IMAGE_POSITION_MODIFIER = 2
+        private const val FACE_SIZE_RESTRICTION = 125
+    }
 }
 
 interface FaceAnalyzerCallback {
-    fun processFace(faces: List<Face>)
+    fun processFace(detectedFace: Bitmap)
     fun errorFace(error: String)
 }
