@@ -9,12 +9,12 @@ class AuthInterceptor(private val sharedPreferencesHelper: SharedPreferencesHelp
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
 
-
-        val newRequest = originalRequest.newBuilder()
-            .header(AUTHORIZATION_HEADER, "Bearer ${sharedPreferencesHelper.token}")
-            .header("Content-Type", "application/json")
-            .build()
-
+        val newRequest = sharedPreferencesHelper.token?.let {
+           originalRequest.newBuilder()
+                .header(AUTHORIZATION_HEADER, it)
+                .header("Content-Type", "application/json")
+                .build()
+        } ?: originalRequest
         return chain.proceed(newRequest)
     }
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safediary.HttpRequestException
 import com.example.safediary.SharedPreferencesHelper
+import com.example.safediary.dto.FaceLoginDto
 import com.example.safediary.network.AppService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -14,7 +15,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
-import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 
@@ -61,11 +61,11 @@ class FaceLoginRegisterViewModel(private val sharedPreferencesHelper: SharedPref
     }
 
     @OptIn(ExperimentalEncodingApi::class)
-    private fun generateBase64String(image: Bitmap): String {
+    private fun generateBase64String(image: Bitmap): ByteArray {
         val byteBuffer = ByteBuffer.allocate(image.byteCount)
         image.copyPixelsToBuffer(byteBuffer)
         byteBuffer.rewind()
-        return Base64.encode(byteBuffer.array())
+        return byteBuffer.array()
     }
 
     @OptIn(ExperimentalEncodingApi::class)
@@ -96,10 +96,10 @@ class FaceLoginRegisterViewModel(private val sharedPreferencesHelper: SharedPref
             state.copy(canScan = false)
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val base64Image = generateBase64String(image)
+            val byteArray = generateBase64String(image)
             val appId = sharedPreferencesHelper.appId!!
             try {
-                //val result: String = throw HttpRequestException(404, "")
+                appService.registerWithFace(FaceLoginDto(appId, byteArray))
                 registerChannel.send(SuccessfulRegisterUIEvent)
             } catch (e: HttpRequestException) {
                 registerChannel.send(UnsuccessfulRegisterUIEvent)

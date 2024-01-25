@@ -2,12 +2,13 @@ package com.example.safediary.login.pin_register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.safediary.Constants
 import com.example.safediary.HttpRequestException
 import com.example.safediary.SharedPreferencesHelper
+import com.example.safediary.dto.PinLoginDto
 import com.example.safediary.login.pin_login.PinLoginState
 import com.example.safediary.network.AppService
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -30,10 +31,11 @@ class PinRegisterViewModel(private val appService: AppService, private val share
                     _pinState.update { state ->
                         state.copy(isLoading = true)
                     }
-                    sharedPreferencesHelper.appId = UUID.randomUUID().toString()
-                    delay(2000)
+                    val uuid = UUID.randomUUID().toString()
                     try {
-                        //throw HttpRequestException(500, "")
+                        val result = appService.registerWithPin(PinLoginDto(uuid, pinState.value.pin))
+                        sharedPreferencesHelper.token = result.headers[Constants.AUTHORIZATION_HEADER]
+                        sharedPreferencesHelper.appId = uuid
                         pinChannel.send(SuccessfulRegisterEvent)
                     } catch (e: HttpRequestException) {
                         pinChannel.send(UnsuccessfulRegisterEvent)

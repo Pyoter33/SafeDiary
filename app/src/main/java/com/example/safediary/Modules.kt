@@ -8,6 +8,10 @@ import com.example.safediary.network.AuthInterceptor
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -21,10 +25,21 @@ val appModule = module {
             engine {
                 addInterceptor(get<AuthInterceptor>())
             }
+            defaultRequest {
+                url {
+                    Constants.BASE_URL
+                }
+            }
             install(HttpTimeout) {
                 connectTimeoutMillis = CONNECT_TIMEOUT
                 requestTimeoutMillis = REQUEST_TIMEOUT
                 socketTimeoutMillis = SOCKET_TIMEOUT
+            }
+            install(ContentNegotiation) {
+                json(Json {
+                    prettyPrint = true
+                    isLenient = true
+                })
             }
         }
     }
