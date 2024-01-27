@@ -24,6 +24,7 @@ class AppService(private val client: HttpClient) {
                     append("face-image", faceLoginDto.faceImageBytes, Headers.build {
                         append(HttpHeaders.ContentDisposition, "filename=face-image")
                     })
+                    append("uuid", faceLoginDto.uuid)
                 }
             )
         }
@@ -34,6 +35,13 @@ class AppService(private val client: HttpClient) {
                 setBody(pinLoginDto)
             }
         }
+
+    suspend fun loginWithPin(pinLoginDto: PinLoginDto): HttpResponse {
+        return client.post("users/login") {
+            contentType(ContentType.Application.Json)
+            setBody(pinLoginDto)
+        }
+    }
 }
 
 

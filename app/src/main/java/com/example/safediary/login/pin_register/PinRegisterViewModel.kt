@@ -1,5 +1,6 @@
 package com.example.safediary.login.pin_register
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safediary.Constants
@@ -8,6 +9,7 @@ import com.example.safediary.SharedPreferencesHelper
 import com.example.safediary.dto.PinLoginDto
 import com.example.safediary.login.pin_login.PinLoginState
 import com.example.safediary.network.AppService
+import com.example.safediary.toBodyOrError
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,11 +36,13 @@ class PinRegisterViewModel(private val appService: AppService, private val share
                     val uuid = UUID.randomUUID().toString()
                     try {
                         val result = appService.registerWithPin(PinLoginDto(uuid, pinState.value.pin))
+                        result.toBodyOrError<Unit>()
                         sharedPreferencesHelper.token = result.headers[Constants.AUTHORIZATION_HEADER]
                         sharedPreferencesHelper.appId = uuid
                         pinChannel.send(SuccessfulRegisterEvent)
                     } catch (e: HttpRequestException) {
                         pinChannel.send(UnsuccessfulRegisterEvent)
+                        Log.e(this@PinRegisterViewModel.javaClass.name, e.errorMessage)
                     }
                     _pinState.update { state ->
                         state.copy(isLoading = false)

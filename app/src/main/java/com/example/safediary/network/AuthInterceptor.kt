@@ -12,7 +12,6 @@ class AuthInterceptor(private val sharedPreferencesHelper: SharedPreferencesHelp
         val newRequest = sharedPreferencesHelper.token?.let {
            originalRequest.newBuilder()
                 .header(AUTHORIZATION_HEADER, it)
-                .header("Content-Type", "application/json")
                 .build()
         } ?: originalRequest
         return chain.proceed(newRequest)

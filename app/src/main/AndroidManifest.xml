@@ -7,6 +7,15 @@
         android:required="false" />
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <queries>
+        <intent>
+            <action
+                android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 
     <application
         android:name=".SafeDiaryApp"
@@ -21,15 +30,14 @@
         android:theme="@style/Theme.SafeDiary"
         tools:targetApi="31">
         <activity
-            android:name=".diary.MainActivity"
+            android:name=".login.LoginActivity"
             android:exported="false"
             android:theme="@style/Theme.SafeDiary" />
         <activity
-            android:name=".login.LoginActivity"
+            android:name=".diary.MainActivity"
             android:exported="true"
             android:noHistory="true"
-            android:theme="@style/Theme.SafeDiary"
-            android:windowSoftInputMode="adjustResize">
+            android:theme="@style/Theme.SafeDiary">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

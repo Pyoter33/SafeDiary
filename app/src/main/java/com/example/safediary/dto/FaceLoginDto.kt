@@ -1,7 +1,7 @@
 package com.example.safediary.dto
 
 data class FaceLoginDto (
-    val deviceId: String,
+    val uuid: String,
     val faceImageBytes: ByteArray
 ) {
     override fun equals(other: Any?): Boolean {
@@ -10,12 +10,12 @@ data class FaceLoginDto (
 
         other as FaceLoginDto
 
-        if (deviceId != other.deviceId) return false
+        if (uuid != other.uuid) return false
         return faceImageBytes.contentEquals(other.faceImageBytes)
     }
 
     override fun hashCode(): Int {
-        var result = deviceId.hashCode()
+        var result = uuid.hashCode()
         result = 31 * result + faceImageBytes.contentHashCode()
         return result
     }

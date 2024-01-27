@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SafeDiary</string>
+    <string name="app_name">Cyfrowy pamiętnik</string>
     <string name="something_went_wrong">Coś poszło nie tak. Spróbuj ponownie!</string>
     <string name="login_face_position">Ustaw telefon tak, aby twarz w całości znajdowała się wewnątrz okręgu.</string>
     <string name="login_enter_pin">Podaj numer PIN, aby zalogować się do aplikacji:</string>
@@ -11,4 +11,9 @@
     <string name="register_register_text">Podaj 6-liczbowy kod PIN, którym będziesz logować się do aplikacji. Zapamiętaj go!\nJeśli nie będziemy w stanie Cię rozpoznać, to tylko dzięki niemu zalogujesz się do aplikacji.</string>
     <string name="register_continue_register">Kontynuuj rejestrację</string>
     <string name="register_face_explanation">Abyś mógł/mogła logować się za pomocą twarzy musimy najpierw ją zarejestrować.</string>
+    <string name="register_login_set_pin">Podaj kod PIN</string>
+    <string name="create_edit_save">Zapisz</string>
+    <string name="create_edit_title">Tytuł</string>
+    <string name="create_edit_date">Data</string>
+    <string name="create_edit_entry">Wpis</string>
 </resources>

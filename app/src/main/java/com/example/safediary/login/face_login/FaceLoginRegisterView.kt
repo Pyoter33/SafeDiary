@@ -47,7 +47,6 @@ import com.google.accompanist.permissions.rememberPermissionState
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FaceLoginRegisterView(onEvent: (FaceLoginEvent) -> Unit, isRegister: Boolean = false) {

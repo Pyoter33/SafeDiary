@@ -1,12 +1,14 @@
 package com.example.safediary.login.face_login
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safediary.HttpRequestException
 import com.example.safediary.SharedPreferencesHelper
 import com.example.safediary.dto.FaceLoginDto
 import com.example.safediary.network.AppService
+import com.example.safediary.toBodyOrError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -18,7 +20,10 @@ import java.nio.ByteBuffer
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 
-class FaceLoginRegisterViewModel(private val sharedPreferencesHelper: SharedPreferencesHelper, private val appService: AppService) : ViewModel() {
+class FaceLoginRegisterViewModel(
+    private val sharedPreferencesHelper: SharedPreferencesHelper,
+    private val appService: AppService
+) : ViewModel() {
 
     private val _loginState = MutableStateFlow(LoginState())
 
@@ -60,8 +65,7 @@ class FaceLoginRegisterViewModel(private val sharedPreferencesHelper: SharedPref
         }
     }
 
-    @OptIn(ExperimentalEncodingApi::class)
-    private fun generateBase64String(image: Bitmap): ByteArray {
+    private fun generateByteArray(image: Bitmap): ByteArray {
         val byteBuffer = ByteBuffer.allocate(image.byteCount)
         image.copyPixelsToBuffer(byteBuffer)
         byteBuffer.rewind()
@@ -74,12 +78,12 @@ class FaceLoginRegisterViewModel(private val sharedPreferencesHelper: SharedPref
             state.copy(canScan = false, numberOfScans = state.numberOfScans + 1)
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val base64Image = generateBase64String(image)
+            val byteArray = generateByteArray(image)
             val appId = sharedPreferencesHelper.appId!!
             try {
-                //val result: String = throw HttpRequestException(404, "")
                 loginChannel.send(SuccessfulLoginUIEvent)
             } catch (e: HttpRequestException) {
+                Log.e(this@FaceLoginRegisterViewModel.javaClass.name, e.errorMessage)
                 if (_loginState.value.numberOfScans >= MAX_NUMBER_OF_LOGIN_TRIES) {
                     loginChannel.send(UnsuccessfulLoginUIEvent)
                 } else {
@@ -96,13 +100,14 @@ class FaceLoginRegisterViewModel(private val sharedPreferencesHelper: SharedPref
             state.copy(canScan = false)
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val byteArray = generateBase64String(image)
+            val byteArray = generateByteArray(image)
             val appId = sharedPreferencesHelper.appId!!
             try {
-                appService.registerWithFace(FaceLoginDto(appId, byteArray))
+                appService.registerWithFace(FaceLoginDto(appId, byteArray)).toBodyOrError<Unit>()
                 registerChannel.send(SuccessfulRegisterUIEvent)
             } catch (e: HttpRequestException) {
                 registerChannel.send(UnsuccessfulRegisterUIEvent)
+                Log.e(this@FaceLoginRegisterViewModel.javaClass.name, e.errorMessage)
             }
         }
     }
@@ -114,16 +119,16 @@ class FaceLoginRegisterViewModel(private val sharedPreferencesHelper: SharedPref
 }
 
 sealed class FaceLoginEvent
-data class LoginWithFaceEvent(val bitmap: Bitmap): FaceLoginEvent()
-data class RegisterFaceEvent(val bitmap: Bitmap): FaceLoginEvent()
-data object WaitForPositionEvent: FaceLoginEvent()
-data object BackClickedEvent: FaceLoginEvent()
+data class LoginWithFaceEvent(val bitmap: Bitmap) : FaceLoginEvent()
+data class RegisterFaceEvent(val bitmap: Bitmap) : FaceLoginEvent()
+data object WaitForPositionEvent : FaceLoginEvent()
+data object BackClickedEvent : FaceLoginEvent()
 
 sealed class LoginUIEvent
-data object SuccessfulLoginUIEvent: LoginUIEvent()
-data object UnsuccessfulLoginUIEvent: LoginUIEvent()
-data object BackToPinUIEvent: LoginUIEvent()
+data object SuccessfulLoginUIEvent : LoginUIEvent()
+data object UnsuccessfulLoginUIEvent : LoginUIEvent()
+data object BackToPinUIEvent : LoginUIEvent()
 
 sealed class RegisterUIEvent
-data object SuccessfulRegisterUIEvent: RegisterUIEvent()
-data object UnsuccessfulRegisterUIEvent: RegisterUIEvent()
+data object SuccessfulRegisterUIEvent : RegisterUIEvent()
+data object UnsuccessfulRegisterUIEvent : RegisterUIEvent()

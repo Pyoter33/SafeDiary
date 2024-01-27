@@ -51,7 +51,7 @@ private const val ARG_IS_FROM_UNSUCCESSFUL_FACE_LOGIN = "isFromUnsuccessfulFaceL
 @Composable
 fun AppNavHost(
     navController: NavHostController = rememberNavController(),
-    startDestination: String,
+    startDestination: String
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 

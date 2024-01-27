@@ -1,5 +1,7 @@
 package com.example.safediary
 
+import com.example.safediary.diary.create_edit.CreateEditEntryViewModel
+import com.example.safediary.diary.create_edit.SpeechRecognizerHelper
 import com.example.safediary.login.face_login.FaceLoginRegisterViewModel
 import com.example.safediary.login.pin_login.PinLoginViewModel
 import com.example.safediary.login.pin_register.PinRegisterViewModel
@@ -19,16 +21,14 @@ val appModule = module {
     single { SharedPreferencesHelper(get()) }
     single { AppService(get()) }
     single { AuthInterceptor(get()) }
+    single { SpeechRecognizerHelper(get()) }
     single {
         HttpClient(OkHttp) {
-            expectSuccess = true
             engine {
                 addInterceptor(get<AuthInterceptor>())
             }
             defaultRequest {
-                url {
-                    Constants.BASE_URL
-                }
+                url(Constants.BASE_URL)
             }
             install(HttpTimeout) {
                 connectTimeoutMillis = CONNECT_TIMEOUT
@@ -37,8 +37,7 @@ val appModule = module {
             }
             install(ContentNegotiation) {
                 json(Json {
-                    prettyPrint = true
-                    isLenient = true
+                    ignoreUnknownKeys = true
                 })
             }
         }
@@ -46,6 +45,7 @@ val appModule = module {
     viewModel { FaceLoginRegisterViewModel(get(), get()) }
     viewModel { PinLoginViewModel(get(), get()) }
     viewModel { PinRegisterViewModel(get(), get()) }
+    viewModel { CreateEditEntryViewModel(get(), get()) }
 }
 
 private const val CONNECT_TIMEOUT = 20000L

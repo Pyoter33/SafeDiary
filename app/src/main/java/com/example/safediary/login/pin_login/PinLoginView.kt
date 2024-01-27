@@ -40,6 +40,12 @@ fun PinLoginView(state: PinLoginState, onEvent: (PinLoginEvent) -> Unit) {
         ) {
             Spacer(modifier = Modifier.size(48.dp))
             Text(
+                text = stringResource(id = R.string.register_login_set_pin),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.size(24.dp))
+            Text(
                 text = stringResource(id = R.string.login_enter_pin),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(horizontal = 16.dp)
