@@ -20,4 +20,6 @@
     <string name="view_delete_dialog_message">Czy na pewno chcesz usunąć ten wpis?</string>
     <string name="view_yes">Tak</string>
     <string name="view_no">Nie</string>
+    <string name="list_your_entries">Twoje wpisy</string>
+    <string name="list_search_by_title">Wyszukaj po tytule</string>
 </resources>

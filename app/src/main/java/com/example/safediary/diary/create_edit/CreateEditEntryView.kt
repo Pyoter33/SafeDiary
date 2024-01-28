@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.safediary.Constants
 import com.example.safediary.DiaryAccent
 import com.example.safediary.R
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -96,7 +97,7 @@ fun CreateEditEntryView(
                 )
                 Spacer(modifier = Modifier.size(4.dp))
                 DatePickerView(
-                    text = state.date.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                    text = state.date.format(DateTimeFormatter.ofPattern(Constants.DATE_PATTERN)),
                     onDateChanged = {
                         onEvent(DateChangedEvent(it))
                     },

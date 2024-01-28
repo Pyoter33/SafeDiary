@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.safediary.Constants.ARG_ENTRY_CONTENT
 import com.example.safediary.Constants.ARG_ENTRY_DATE
 import com.example.safediary.Constants.ARG_ENTRY_TITLE
+import com.example.safediary.Constants.DATE_PATTERN
 import com.example.safediary.network.AppService
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,7 @@ import java.time.format.DateTimeFormatter
 class CreateEditEntryViewModel(appService: AppService, savedStateHandle: SavedStateHandle): ViewModel() {
 
     private val argTitle by lazy { savedStateHandle.get<String>(ARG_ENTRY_TITLE) }
-    private val argDate by lazy { savedStateHandle.get<String>(ARG_ENTRY_DATE)?.let { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) } }
+    private val argDate by lazy { savedStateHandle.get<String>(ARG_ENTRY_DATE)?.let { LocalDate.parse(it, DateTimeFormatter.ofPattern(DATE_PATTERN)) } }
     private val argContent by lazy { savedStateHandle.get<String>(ARG_ENTRY_CONTENT) }
 
     private val _createEditEntryState = MutableStateFlow(
@@ -37,7 +38,7 @@ class CreateEditEntryViewModel(appService: AppService, savedStateHandle: SavedSt
     fun onEvent(event: CreateEditEntryEvent) {
         when (event) {
             CreateClickedEvent -> {
-                val currentState =createEditEntryState.value
+                val currentState = createEditEntryState.value
                 if (currentState.content.isEmpty() || currentState.title.isEmpty()) {
                     viewModelScope.launch {
                         _createEditEntryChannel.send(DataNotFilledUIEvent)

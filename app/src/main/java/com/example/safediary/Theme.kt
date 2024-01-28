@@ -11,9 +11,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 val DiaryPrimary = Color(0xFF6D83B8)
+val DiaryPrimaryLight = Color(0xFFD9DEE9)
 val DiarySecondary = Color(0xFFF3E9D2)
 val DiaryAccent = Color(0xFFE29587)
 val DiaryBackground = Color(0xFFF5F5F5)
+val DiaryLightGray = Color(0xFFE6E6E6)
 
 private val DiaryTypography = Typography(
     displayLarge = TextStyle(

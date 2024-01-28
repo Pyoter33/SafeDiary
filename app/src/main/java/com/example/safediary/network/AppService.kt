@@ -1,5 +1,6 @@
 package com.example.safediary.network
 
+import com.example.safediary.diary.list.Entry
 import com.example.safediary.dto.FaceLoginDto
 import com.example.safediary.dto.PinLoginDto
 import io.ktor.client.HttpClient
@@ -14,6 +15,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
 
 class AppService(private val client: HttpClient) {
 
@@ -41,6 +43,26 @@ class AppService(private val client: HttpClient) {
             contentType(ContentType.Application.Json)
             setBody(pinLoginDto)
         }
+    }
+
+    suspend fun getEntries(): List<Entry> {
+        return listOf(
+            Entry(
+                "Mój grudniowy dzień",
+                LocalDate.of(2023, 12, 17),
+                "afgajoigjawoi;gjawg awpgj awo;gj awo;gj "
+            ),
+            Entry(
+                "Ciekawa sytuacja",
+                LocalDate.now(),
+                "afgajoigjawoi;gjawg awpgj awo;gj awo;gj afgajoigjawoi;gjawg awpgj awo;gj awo;gj  afgajoigjawoi;gjawg awpgj awo;gj awo;gj  afgajoigjawoi;gjawg awpgj awo;gj awo;gj  afgajoigjawoi;gjawg awpgj awo;gj awo;gj "
+            ),
+            Entry(
+                "Nowy rok, nowy ja",
+                LocalDate.of(2024, 1, 12),
+                "afgajoigjawoi;gjawg awpgj awo;gj awo;gj "
+            )
+        )
     }
 }
 

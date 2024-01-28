@@ -6,4 +6,5 @@ object Constants {
     const val ARG_ENTRY_TITLE = "EntryTitle"
     const val ARG_ENTRY_DATE = "EntryDate"
     const val ARG_ENTRY_CONTENT = "EntryContent"
+    const val DATE_PATTERN = "dd.MM.yyyy"
 }

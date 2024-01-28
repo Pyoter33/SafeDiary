@@ -3,6 +3,7 @@ package com.example.safediary.diary.view
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.safediary.Constants
 import com.example.safediary.Constants.ARG_ENTRY_CONTENT
 import com.example.safediary.Constants.ARG_ENTRY_DATE
 import com.example.safediary.Constants.ARG_ENTRY_TITLE
@@ -14,11 +15,20 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
-class ViewEntryViewModel(appService: AppService, savedStateHandle: SavedStateHandle): ViewModel() {
+class ViewEntryViewModel(appService: AppService, savedStateHandle: SavedStateHandle) : ViewModel() {
 
     private val argTitle by lazy { savedStateHandle.get<String>(ARG_ENTRY_TITLE) }
-    private val argDate by lazy { savedStateHandle.get<String>(ARG_ENTRY_DATE)?.let { LocalDate.parse(it) } }
+    private val argDate by lazy {
+        savedStateHandle.get<String>(ARG_ENTRY_DATE)?.let {
+            LocalDate.parse(
+                it, DateTimeFormatter.ofPattern(
+                    Constants.DATE_PATTERN
+                )
+            )
+        }
+    }
     private val argContent by lazy { savedStateHandle.get<String>(ARG_ENTRY_CONTENT) }
 
     private val _viewEntryState = MutableStateFlow(
@@ -40,6 +50,7 @@ class ViewEntryViewModel(appService: AppService, savedStateHandle: SavedStateHan
                     state.copy(deleteDialogVisible = true)
                 }
             }
+
             DeleteConfirmedEvent -> {
                 _viewEntryState.update { state ->
                     state.copy(deleteDialogVisible = false)
@@ -49,11 +60,13 @@ class ViewEntryViewModel(appService: AppService, savedStateHandle: SavedStateHan
                     _viewEntryChannel.send(NavigateBackEvent)
                 }
             }
+
             DeleteRejectedEvent -> {
                 _viewEntryState.update { state ->
                     state.copy(deleteDialogVisible = false)
                 }
             }
+
             EditClickedEvent -> {
                 viewModelScope.launch {
                     _viewEntryChannel.send(NavigateToEditEvent(viewEntryStateFlow.value))
@@ -64,11 +77,11 @@ class ViewEntryViewModel(appService: AppService, savedStateHandle: SavedStateHan
 }
 
 sealed class ViewEntryEvent
-data object EditClickedEvent: ViewEntryEvent()
-data object DeleteClickedEvent: ViewEntryEvent()
-data object DeleteConfirmedEvent: ViewEntryEvent()
-data object DeleteRejectedEvent: ViewEntryEvent()
+data object EditClickedEvent : ViewEntryEvent()
+data object DeleteClickedEvent : ViewEntryEvent()
+data object DeleteConfirmedEvent : ViewEntryEvent()
+data object DeleteRejectedEvent : ViewEntryEvent()
 
 sealed class ViewEntryUIEvent
-data object NavigateBackEvent: ViewEntryUIEvent()
-data class NavigateToEditEvent(val state: ViewEntryState): ViewEntryUIEvent()
+data object NavigateBackEvent : ViewEntryUIEvent()
+data class NavigateToEditEvent(val state: ViewEntryState) : ViewEntryUIEvent()

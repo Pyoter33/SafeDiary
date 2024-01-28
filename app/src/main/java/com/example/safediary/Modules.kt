@@ -3,6 +3,7 @@ package com.example.safediary
 import androidx.lifecycle.SavedStateHandle
 import com.example.safediary.diary.create_edit.CreateEditEntryViewModel
 import com.example.safediary.diary.create_edit.SpeechRecognizerHelper
+import com.example.safediary.diary.list.EntriesListViewModel
 import com.example.safediary.diary.view.ViewEntryViewModel
 import com.example.safediary.login.face_login.FaceLoginRegisterViewModel
 import com.example.safediary.login.pin_login.PinLoginViewModel
@@ -50,6 +51,7 @@ val appModule = module {
     viewModel { PinRegisterViewModel(get(), get()) }
     viewModel { (handle: SavedStateHandle) ->  CreateEditEntryViewModel(get(), handle) }
     viewModel { (handle: SavedStateHandle) -> ViewEntryViewModel(get(), handle) }
+    viewModel { ( EntriesListViewModel(get())) }
 }
 
 private const val CONNECT_TIMEOUT = 20000L

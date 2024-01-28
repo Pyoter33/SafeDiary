@@ -33,14 +33,22 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.safediary.Constants
 import com.example.safediary.Constants.ARG_ENTRY_CONTENT
 import com.example.safediary.Constants.ARG_ENTRY_DATE
 import com.example.safediary.Constants.ARG_ENTRY_TITLE
+import com.example.safediary.DiaryAccent
 import com.example.safediary.DiaryPrimary
 import com.example.safediary.R
 import com.example.safediary.diary.create_edit.CreateEditEntryView
 import com.example.safediary.diary.create_edit.CreateEditEntryViewModel
 import com.example.safediary.diary.create_edit.SpeechRecognizerHelper
+import com.example.safediary.diary.list.AddClickedEvent
+import com.example.safediary.diary.list.EntriesListView
+import com.example.safediary.diary.list.EntriesListViewModel
+import com.example.safediary.diary.list.GetEntriesEvent
+import com.example.safediary.diary.list.NavigateToCreationUIEvent
+import com.example.safediary.diary.list.NavigateToDetailsUIEvent
 import com.example.safediary.diary.view.DeleteClickedEvent
 import com.example.safediary.diary.view.EditClickedEvent
 import com.example.safediary.diary.view.NavigateBackEvent
@@ -59,11 +67,13 @@ private const val ROUTE_ENTRY_VIEW = "EntryView"
 @Composable
 fun MainNavHost(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = ROUTE_ENTRY_VIEW
+    startDestination: String = ROUTE_ENTRY_LIST
 ) {
 
     var editButtonEventListener: (() -> Unit)? = null
     var deleteButtonEventListener: (() -> Unit)? = null
+    var createButtonEventListener: (() -> Unit)? = null
+    var faceButtonEventListener: (() -> Unit)? = null
 
     var showEditDeleteIcons by remember {
         mutableStateOf(false)
@@ -81,23 +91,26 @@ fun MainNavHost(
     LaunchedEffect(Unit) {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             showBackButton = navController.previousBackStackEntry != null
-            when (destination.route) {
-                ROUTE_ENTRY_VIEW -> {
-                    showEditDeleteIcons = true
-                    showUpdateFaceIcon = false
-                    showAddButton = false
-                }
+            if (destination.route == null) return@addOnDestinationChangedListener
+            with (destination.route!!) {
+                when {
+                    contains(ROUTE_ENTRY_VIEW) -> {
+                        showEditDeleteIcons = true
+                        showUpdateFaceIcon = false
+                        showAddButton = false
+                    }
 
-                ROUTE_ENTRY_LIST -> {
-                    showEditDeleteIcons = false
-                    showUpdateFaceIcon = true
-                    showAddButton = true
-                }
+                    contains(ROUTE_ENTRY_LIST) -> {
+                        showEditDeleteIcons = false
+                        showUpdateFaceIcon = true
+                        showAddButton = true
+                    }
 
-                else -> {
-                    showEditDeleteIcons = false
-                    showUpdateFaceIcon = false
-                    showAddButton = false
+                    else -> {
+                        showEditDeleteIcons = false
+                        showUpdateFaceIcon = false
+                        showAddButton = false
+                    }
                 }
             }
         }
@@ -113,20 +126,24 @@ fun MainNavHost(
         },
             navigationIcon = {
                 if (showBackButton) {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.Filled.ArrowBack,
-                                tint = Color.White,
-                                contentDescription = null
-                            )
-                        }
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            tint = Color.White,
+                            contentDescription = null
+                        )
+                    }
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = DiaryPrimary),
             actions = {
                 if (showUpdateFaceIcon) {
                     IconButton(onClick = { }) {
-                        Icon(imageVector = Icons.Default.Face, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.Default.Face,
+                            tint = Color.White,
+                            contentDescription = null
+                        )
                     }
                 }
                 if (showEditDeleteIcons) {
@@ -153,9 +170,15 @@ fun MainNavHost(
     }, floatingActionButton = {
         if (showAddButton) {
             FloatingActionButton(
-                onClick = { },
+                onClick = {
+                    createButtonEventListener?.invoke()
+                },
+                containerColor = DiaryAccent,
             ) {
-                Icon(Icons.Filled.Add, null)
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = null
+                )
             }
         }
     }) { values ->
@@ -164,7 +187,8 @@ fun MainNavHost(
             startDestination = startDestination,
             modifier = Modifier.padding(values)
         ) {
-            composable(route = "$ROUTE_ENTRY_CREATE_EDIT?$ARG_ENTRY_TITLE={$ARG_ENTRY_TITLE}&$ARG_ENTRY_DATE={$ARG_ENTRY_DATE}&$ARG_ENTRY_CONTENT={$ARG_ENTRY_CONTENT}",
+            composable(
+                route = "$ROUTE_ENTRY_CREATE_EDIT?$ARG_ENTRY_TITLE={$ARG_ENTRY_TITLE}&$ARG_ENTRY_DATE={$ARG_ENTRY_DATE}&$ARG_ENTRY_CONTENT={$ARG_ENTRY_CONTENT}",
                 arguments = listOf(navArgument(ARG_ENTRY_TITLE) {
                     type = NavType.StringType
                     nullable = true
@@ -177,21 +201,31 @@ fun MainNavHost(
                     type = NavType.StringType
                     nullable = true
                     defaultValue = null
-                })) {
+                })
+            ) {
                 val viewModel: CreateEditEntryViewModel = koinViewModel()
                 val state by viewModel.createEditEntryState.collectAsState()
                 val speechRecognizerHelper = koinInject<SpeechRecognizerHelper>()
                 CreateEditEntryView(state, viewModel::onEvent, speechRecognizerHelper)
             }
 
-            composable(ROUTE_ENTRY_VIEW) {
+            composable(
+                route = "$ROUTE_ENTRY_VIEW/{$ARG_ENTRY_TITLE}/{$ARG_ENTRY_DATE}/{$ARG_ENTRY_CONTENT}",
+                arguments = listOf(navArgument(ARG_ENTRY_TITLE) {
+                    type = NavType.StringType
+                }, navArgument(ARG_ENTRY_DATE) {
+                    type = NavType.StringType
+                }, navArgument(ARG_ENTRY_CONTENT) {
+                    type = NavType.StringType
+                })
+            ) {
                 val lifecycleOwner = LocalLifecycleOwner.current
                 val viewModel: ViewEntryViewModel = koinViewModel()
                 val state by viewModel.viewEntryStateFlow.collectAsState()
                 editButtonEventListener = { viewModel.onEvent(EditClickedEvent) }
                 deleteButtonEventListener = { viewModel.onEvent(DeleteClickedEvent) }
 
-                LaunchedEffect(key1 = lifecycleOwner) {
+                LaunchedEffect(lifecycleOwner) {
                     viewModel.viewEntryChannelFlow.collect { event ->
                         when (event) {
                             NavigateBackEvent -> {
@@ -200,7 +234,11 @@ fun MainNavHost(
 
                             is NavigateToEditEvent -> {
                                 val title = event.state.title
-                                val date = event.state.date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                                val date = event.state.date.format(
+                                    DateTimeFormatter.ofPattern(
+                                        Constants.DATE_PATTERN
+                                    )
+                                )
                                 val content = event.state.content
                                 navController.navigate("$ROUTE_ENTRY_CREATE_EDIT?$ARG_ENTRY_TITLE=$title&$ARG_ENTRY_DATE=$date&$ARG_ENTRY_CONTENT=$content")
                             }
@@ -208,6 +246,38 @@ fun MainNavHost(
                     }
                 }
                 ViewEntryView(state, viewModel::onEvent)
+            }
+
+            composable(ROUTE_ENTRY_LIST) {
+                val lifecycleOwner = LocalLifecycleOwner.current
+                val viewModel: EntriesListViewModel = koinViewModel()
+                val state by viewModel.listStateFlow.collectAsState()
+                createButtonEventListener = {
+                    viewModel.onEvent(AddClickedEvent)
+                }
+
+                LaunchedEffect(lifecycleOwner) {
+                    viewModel.onEvent(GetEntriesEvent)
+                    viewModel.listEntriesChannelFlow.collect { event ->
+                        when (event) {
+                            NavigateToCreationUIEvent -> {
+                                navController.navigate(ROUTE_ENTRY_CREATE_EDIT)
+                            }
+                            is NavigateToDetailsUIEvent -> {
+                                val title = event.entry.title
+                                val date = event.entry.date.format(
+                                    DateTimeFormatter.ofPattern(
+                                        Constants.DATE_PATTERN
+                                    )
+                                )
+                                val content = event.entry.content
+                                navController.navigate("$ROUTE_ENTRY_VIEW/$title/$date/$content")
+                            }
+                        }
+                    }
+                }
+
+                EntriesListView(state, viewModel::onEvent)
             }
         }
     }
