@@ -1,4 +1,4 @@
-package com.example.safediary
+package com.example.safediary.utils
 
 import android.graphics.Bitmap
 import androidx.annotation.OptIn

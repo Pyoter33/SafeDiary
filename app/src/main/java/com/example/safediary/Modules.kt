@@ -9,6 +9,7 @@ import com.example.safediary.login.pin_login.PinLoginViewModel
 import com.example.safediary.login.pin_register.PinRegisterViewModel
 import com.example.safediary.network.AppService
 import com.example.safediary.network.AuthInterceptor
+import com.example.safediary.utils.SharedPreferencesHelper
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout

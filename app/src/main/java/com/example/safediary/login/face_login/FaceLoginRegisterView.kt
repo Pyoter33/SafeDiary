@@ -38,9 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.example.safediary.FaceAnalyzer
-import com.example.safediary.FaceAnalyzerCallback
 import com.example.safediary.R
+import com.example.safediary.utils.FaceAnalyzer
+import com.example.safediary.utils.FaceAnalyzerCallback
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState

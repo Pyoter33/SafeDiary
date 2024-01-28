@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.safediary.AppTheme
-import com.example.safediary.SharedPreferencesHelper
+import com.example.safediary.utils.SharedPreferencesHelper
 import org.koin.android.ext.android.inject
 
 class LoginActivity : ComponentActivity() {

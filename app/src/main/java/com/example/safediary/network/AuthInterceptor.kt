@@ -1,6 +1,6 @@
 package com.example.safediary.network
 
-import com.example.safediary.SharedPreferencesHelper
+import com.example.safediary.utils.SharedPreferencesHelper
 import okhttp3.Interceptor
 import okhttp3.Response
 

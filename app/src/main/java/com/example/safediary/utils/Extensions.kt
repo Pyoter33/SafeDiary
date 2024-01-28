@@ -1,4 +1,4 @@
-package com.example.safediary
+package com.example.safediary.utils
 
 import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse
