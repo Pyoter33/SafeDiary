@@ -205,7 +205,7 @@ private fun DatePickerView(
         onValueChange = {},
         readOnly = true,
         singleLine = true,
-        textStyle = MaterialTheme.typography.bodyMedium,
+        textStyle = MaterialTheme.typography.bodyLarge,
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.DateRange,

@@ -16,4 +16,8 @@
     <string name="create_edit_title">Tytuł</string>
     <string name="create_edit_date">Data</string>
     <string name="create_edit_entry">Wpis</string>
+    <string name="view_delete_dialog_title">Usuń wpis</string>
+    <string name="view_delete_dialog_message">Czy na pewno chcesz usunąć ten wpis?</string>
+    <string name="view_yes">Tak</string>
+    <string name="view_no">Nie</string>
 </resources>

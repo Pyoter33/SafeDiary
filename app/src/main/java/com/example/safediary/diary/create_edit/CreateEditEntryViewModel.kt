@@ -3,6 +3,9 @@ package com.example.safediary.diary.create_edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.safediary.Constants.ARG_ENTRY_CONTENT
+import com.example.safediary.Constants.ARG_ENTRY_DATE
+import com.example.safediary.Constants.ARG_ENTRY_TITLE
 import com.example.safediary.network.AppService
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,10 +14,21 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class CreateEditEntryViewModel(appService: AppService, savedStateHandle: SavedStateHandle): ViewModel() {
 
-    private val _createEditEntryState = MutableStateFlow(CreateEditEntryState())
+    private val argTitle by lazy { savedStateHandle.get<String>(ARG_ENTRY_TITLE) }
+    private val argDate by lazy { savedStateHandle.get<String>(ARG_ENTRY_DATE)?.let { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) } }
+    private val argContent by lazy { savedStateHandle.get<String>(ARG_ENTRY_CONTENT) }
+
+    private val _createEditEntryState = MutableStateFlow(
+        CreateEditEntryState(
+            argTitle ?: "",
+            argDate ?: LocalDate.now(),
+            argContent ?: ""
+        )
+    )
     val createEditEntryState = _createEditEntryState.asStateFlow()
 
     private val _createEditEntryChannel = Channel<CreateEditEntryUIEvent>()
@@ -71,8 +85,6 @@ class CreateEditEntryViewModel(appService: AppService, savedStateHandle: SavedSt
         }
 
     }
-
-
 }
 
 sealed class CreateEditEntryEvent
