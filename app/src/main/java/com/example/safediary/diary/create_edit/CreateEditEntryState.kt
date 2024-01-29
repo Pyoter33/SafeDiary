@@ -3,6 +3,7 @@ package com.example.safediary.diary.create_edit
 import java.time.LocalDate
 
 data class CreateEditEntryState(
+    val id: Int = 0,
     val title: String = "",
     val date: LocalDate = LocalDate.now(),
     val content: String = "",

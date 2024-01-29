@@ -1,5 +1,6 @@
 package com.example.safediary.diary
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
@@ -33,31 +35,41 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.safediary.Constants
-import com.example.safediary.Constants.ARG_ENTRY_CONTENT
-import com.example.safediary.Constants.ARG_ENTRY_DATE
-import com.example.safediary.Constants.ARG_ENTRY_TITLE
+import com.example.safediary.Constants.ARG_ENTRY_ID
+import com.example.safediary.Constants.DEFAULT_INT_ARG
 import com.example.safediary.DiaryAccent
 import com.example.safediary.DiaryPrimary
 import com.example.safediary.R
 import com.example.safediary.diary.create_edit.CreateEditEntryView
 import com.example.safediary.diary.create_edit.CreateEditEntryViewModel
+import com.example.safediary.diary.create_edit.DataNotFilledUIEvent
+import com.example.safediary.diary.create_edit.EntryAddedUIEvent
+import com.example.safediary.diary.create_edit.GetDataCreateEvent
+import com.example.safediary.diary.create_edit.SomethingWentWrongCreateUIEvent
 import com.example.safediary.diary.create_edit.SpeechRecognizerHelper
 import com.example.safediary.diary.list.AddClickedEvent
 import com.example.safediary.diary.list.EntriesListView
 import com.example.safediary.diary.list.EntriesListViewModel
+import com.example.safediary.diary.list.FaceClickedEvent
 import com.example.safediary.diary.list.GetEntriesEvent
 import com.example.safediary.diary.list.NavigateToCreationUIEvent
 import com.example.safediary.diary.list.NavigateToDetailsUIEvent
+import com.example.safediary.diary.list.NavigateToFaceRegisterUIEvent
 import com.example.safediary.diary.view.DeleteClickedEvent
 import com.example.safediary.diary.view.EditClickedEvent
+import com.example.safediary.diary.view.GetDataEvent
 import com.example.safediary.diary.view.NavigateBackEvent
 import com.example.safediary.diary.view.NavigateToEditEvent
+import com.example.safediary.diary.view.SomethingWentWrongUIEvent
 import com.example.safediary.diary.view.ViewEntryView
 import com.example.safediary.diary.view.ViewEntryViewModel
+import com.example.safediary.login.ROUTE_FACE_REGISTER
+import com.example.safediary.login.face_login.FaceLoginRegisterView
+import com.example.safediary.login.face_login.FaceLoginRegisterViewModel
+import com.example.safediary.login.face_login.SuccessfulRegisterUIEvent
+import com.example.safediary.login.face_login.UnsuccessfulRegisterUIEvent
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import java.time.format.DateTimeFormatter
 
 private const val ROUTE_ENTRY_LIST = "EntryList"
 private const val ROUTE_ENTRY_CREATE_EDIT = "EntryCreateEdit"
@@ -138,7 +150,9 @@ fun MainNavHost(
             colors = TopAppBarDefaults.topAppBarColors(containerColor = DiaryPrimary),
             actions = {
                 if (showUpdateFaceIcon) {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = {
+                        faceButtonEventListener?.invoke()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Face,
                             tint = Color.White,
@@ -188,37 +202,49 @@ fun MainNavHost(
             modifier = Modifier.padding(values)
         ) {
             composable(
-                route = "$ROUTE_ENTRY_CREATE_EDIT?$ARG_ENTRY_TITLE={$ARG_ENTRY_TITLE}&$ARG_ENTRY_DATE={$ARG_ENTRY_DATE}&$ARG_ENTRY_CONTENT={$ARG_ENTRY_CONTENT}",
-                arguments = listOf(navArgument(ARG_ENTRY_TITLE) {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }, navArgument(ARG_ENTRY_DATE) {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }, navArgument(ARG_ENTRY_CONTENT) {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                })
+                route = "$ROUTE_ENTRY_CREATE_EDIT?$ARG_ENTRY_ID={$ARG_ENTRY_ID}",
+                arguments = listOf(
+                    navArgument(ARG_ENTRY_ID) {
+                        type = NavType.IntType
+                        defaultValue = DEFAULT_INT_ARG
+                    }
+                )
             ) {
+                val lifecycleOwner = LocalLifecycleOwner.current
+                val context = LocalContext.current
                 val viewModel: CreateEditEntryViewModel = koinViewModel()
                 val state by viewModel.createEditEntryState.collectAsState()
                 val speechRecognizerHelper = koinInject<SpeechRecognizerHelper>()
+
+                LaunchedEffect(lifecycleOwner) {
+                    if (it.arguments?.getInt(ARG_ENTRY_ID) != DEFAULT_INT_ARG) viewModel.onEvent(GetDataCreateEvent)
+                    viewModel.createEditEntryChannelFlow.collect { event ->
+                        when (event) {
+                            DataNotFilledUIEvent -> {
+                                Toast.makeText(context, R.string.create_fields_not_filled, Toast.LENGTH_SHORT).show()
+                            }
+                            EntryAddedUIEvent -> {
+                                navController.popBackStack(ROUTE_ENTRY_LIST, false)
+                            }
+
+                            SomethingWentWrongCreateUIEvent -> {
+                                Toast.makeText(context, R.string.something_went_wrong, Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
                 CreateEditEntryView(state, viewModel::onEvent, speechRecognizerHelper)
             }
 
             composable(
-                route = "$ROUTE_ENTRY_VIEW/{$ARG_ENTRY_TITLE}/{$ARG_ENTRY_DATE}/{$ARG_ENTRY_CONTENT}",
-                arguments = listOf(navArgument(ARG_ENTRY_TITLE) {
-                    type = NavType.StringType
-                }, navArgument(ARG_ENTRY_DATE) {
-                    type = NavType.StringType
-                }, navArgument(ARG_ENTRY_CONTENT) {
-                    type = NavType.StringType
-                })
+                route = "$ROUTE_ENTRY_VIEW/{$ARG_ENTRY_ID}",
+                arguments = listOf(
+                    navArgument(ARG_ENTRY_ID) {
+                        type = NavType.IntType
+                    }
+                )
             ) {
+                val context = LocalContext.current
                 val lifecycleOwner = LocalLifecycleOwner.current
                 val viewModel: ViewEntryViewModel = koinViewModel()
                 val state by viewModel.viewEntryStateFlow.collectAsState()
@@ -226,6 +252,7 @@ fun MainNavHost(
                 deleteButtonEventListener = { viewModel.onEvent(DeleteClickedEvent) }
 
                 LaunchedEffect(lifecycleOwner) {
+                    viewModel.onEvent(GetDataEvent)
                     viewModel.viewEntryChannelFlow.collect { event ->
                         when (event) {
                             NavigateBackEvent -> {
@@ -233,14 +260,11 @@ fun MainNavHost(
                             }
 
                             is NavigateToEditEvent -> {
-                                val title = event.state.title
-                                val date = event.state.date.format(
-                                    DateTimeFormatter.ofPattern(
-                                        Constants.DATE_PATTERN
-                                    )
-                                )
-                                val content = event.state.content
-                                navController.navigate("$ROUTE_ENTRY_CREATE_EDIT?$ARG_ENTRY_TITLE=$title&$ARG_ENTRY_DATE=$date&$ARG_ENTRY_CONTENT=$content")
+                                navController.navigate("$ROUTE_ENTRY_CREATE_EDIT?$ARG_ENTRY_ID=${event.id}")
+                            }
+
+                            SomethingWentWrongUIEvent -> {
+                                Toast.makeText(context, R.string.something_went_wrong, Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
@@ -255,6 +279,9 @@ fun MainNavHost(
                 createButtonEventListener = {
                     viewModel.onEvent(AddClickedEvent)
                 }
+                faceButtonEventListener = {
+                    viewModel.onEvent(FaceClickedEvent)
+                }
 
                 LaunchedEffect(lifecycleOwner) {
                     viewModel.onEvent(GetEntriesEvent)
@@ -264,20 +291,37 @@ fun MainNavHost(
                                 navController.navigate(ROUTE_ENTRY_CREATE_EDIT)
                             }
                             is NavigateToDetailsUIEvent -> {
-                                val title = event.entry.title
-                                val date = event.entry.date.format(
-                                    DateTimeFormatter.ofPattern(
-                                        Constants.DATE_PATTERN
-                                    )
-                                )
-                                val content = event.entry.content
-                                navController.navigate("$ROUTE_ENTRY_VIEW/$title/$date/$content")
+                                navController.navigate("$ROUTE_ENTRY_VIEW/${event.id}")
+                            }
+
+                            NavigateToFaceRegisterUIEvent -> {
+                                navController.navigate(ROUTE_FACE_REGISTER)
                             }
                         }
                     }
                 }
-
                 EntriesListView(state, viewModel::onEvent)
+            }
+
+            composable(ROUTE_FACE_REGISTER) {
+                val lifecycleOwner = LocalLifecycleOwner.current
+                val context = LocalContext.current
+                val viewModel: FaceLoginRegisterViewModel = koinViewModel()
+                LaunchedEffect(lifecycleOwner) {
+                    viewModel.registerChannelFlow.collect { event ->
+                        when (event) {
+                            SuccessfulRegisterUIEvent -> {
+                                Toast.makeText(context, R.string.register_face_success, Toast.LENGTH_SHORT).show()
+                                navController.popBackStack()
+                            }
+                            UnsuccessfulRegisterUIEvent -> {
+                                Toast.makeText(context, R.string.something_went_wrong, Toast.LENGTH_SHORT).show()
+                                navController.popBackStack()
+                            }
+                        }
+                    }
+                }
+                FaceLoginRegisterView(onEvent = viewModel::onEvent, isRegister = true)
             }
         }
     }

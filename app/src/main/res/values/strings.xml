@@ -11,11 +11,13 @@
     <string name="register_register_text">Podaj 6-liczbowy kod PIN, którym będziesz logować się do aplikacji. Zapamiętaj go!\nJeśli nie będziemy w stanie Cię rozpoznać, to tylko dzięki niemu zalogujesz się do aplikacji.</string>
     <string name="register_continue_register">Kontynuuj rejestrację</string>
     <string name="register_face_explanation">Abyś mógł/mogła logować się za pomocą twarzy musimy najpierw ją zarejestrować.</string>
+    <string name="register_face_success">Udana rejestracja twarzy</string>
     <string name="register_login_set_pin">Podaj kod PIN</string>
     <string name="create_edit_save">Zapisz</string>
     <string name="create_edit_title">Tytuł</string>
     <string name="create_edit_date">Data</string>
     <string name="create_edit_entry">Wpis</string>
+    <string name="create_fields_not_filled">Wypełnij wszystkie pola, aby móc dodać wpis.</string>
     <string name="view_delete_dialog_title">Usuń wpis</string>
     <string name="view_delete_dialog_message">Czy na pewno chcesz usunąć ten wpis?</string>
     <string name="view_yes">Tak</string>

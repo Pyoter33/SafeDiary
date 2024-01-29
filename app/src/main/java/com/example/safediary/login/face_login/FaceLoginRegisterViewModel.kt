@@ -1,7 +1,6 @@
 package com.example.safediary.login.face_login
 
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safediary.dto.FaceLoginDto
@@ -83,7 +82,7 @@ class FaceLoginRegisterViewModel(
             try {
                 loginChannel.send(SuccessfulLoginUIEvent)
             } catch (e: HttpRequestException) {
-                Log.e(this@FaceLoginRegisterViewModel.javaClass.name, e.errorMessage)
+                e.printStackTrace()
                 if (_loginState.value.numberOfScans >= MAX_NUMBER_OF_LOGIN_TRIES) {
                     loginChannel.send(UnsuccessfulLoginUIEvent)
                 } else {
@@ -106,8 +105,8 @@ class FaceLoginRegisterViewModel(
                 appService.registerWithFace(FaceLoginDto(appId, byteArray)).toBodyOrError<Unit>()
                 registerChannel.send(SuccessfulRegisterUIEvent)
             } catch (e: HttpRequestException) {
+                e.printStackTrace()
                 registerChannel.send(UnsuccessfulRegisterUIEvent)
-                Log.e(this@FaceLoginRegisterViewModel.javaClass.name, e.errorMessage)
             }
         }
     }

@@ -91,10 +91,10 @@ private fun EntryItem(entry: Entry, onEvent: (EntriesListEvent) -> Unit) {
     Column {
         ElevatedCard(
             onClick = {
-                onEvent(EntryClickedEvent(entry))
+                onEvent(EntryClickedEvent(entry.id))
             },
             colors = CardDefaults.elevatedCardColors(containerColor = DiaryPrimaryLight),
-            modifier = Modifier.height(200.dp)
+            modifier = Modifier.height(200.dp).fillMaxWidth()
         ) {
             Text(
                 text = entry.content,

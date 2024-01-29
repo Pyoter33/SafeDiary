@@ -1,6 +1,5 @@
 package com.example.safediary.login.pin_register
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safediary.Constants
@@ -41,8 +40,8 @@ class PinRegisterViewModel(private val appService: AppService, private val share
                         sharedPreferencesHelper.appId = uuid
                         pinChannel.send(SuccessfulRegisterEvent)
                     } catch (e: HttpRequestException) {
+                        e.printStackTrace()
                         pinChannel.send(UnsuccessfulRegisterEvent)
-                        Log.e(this@PinRegisterViewModel.javaClass.name, e.errorMessage)
                     }
                     _pinState.update { state ->
                         state.copy(isLoading = false)

@@ -42,7 +42,7 @@ import com.example.safediary.login.pin_register.UnsuccessfulRegisterEvent
 import org.koin.androidx.compose.koinViewModel
 
 const val ROUTE_FACE_LOGIN = "FaceLogin"
-private const val ROUTE_FACE_REGISTER = "FaceRegister"
+const val ROUTE_FACE_REGISTER = "FaceRegister"
 private const val ROUTE_PIN_LOGIN = "PinLogin"
 const val ROUTE_PIN_REGISTER = "PinRegister"
 

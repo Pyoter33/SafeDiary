@@ -88,6 +88,8 @@ dependencies {
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("io.ktor:ktor-serialization-gson:2.3.0")
 
     implementation("com.google.mlkit:face-detection:16.1.5")
     implementation("com.google.android.gms:play-services-mlkit-face-detection:17.1.0")

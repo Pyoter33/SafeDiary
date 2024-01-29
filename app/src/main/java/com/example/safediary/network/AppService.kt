@@ -1,12 +1,15 @@
 package com.example.safediary.network
 
-import com.example.safediary.diary.list.Entry
+import com.example.safediary.diary.list.EntryDTO
 import com.example.safediary.dto.FaceLoginDto
 import com.example.safediary.dto.PinLoginDto
 import io.ktor.client.HttpClient
+import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
+import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
@@ -15,7 +18,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
 
 class AppService(private val client: HttpClient) {
 
@@ -45,24 +47,36 @@ class AppService(private val client: HttpClient) {
         }
     }
 
-    suspend fun getEntries(): List<Entry> {
-        return listOf(
-            Entry(
-                "Mój grudniowy dzień",
-                LocalDate.of(2023, 12, 17),
-                "afgajoigjawoi;gjawg awpgj awo;gj awo;gj "
-            ),
-            Entry(
-                "Ciekawa sytuacja",
-                LocalDate.now(),
-                "afgajoigjawoi;gjawg awpgj awo;gj awo;gj afgajoigjawoi;gjawg awpgj awo;gj awo;gj  afgajoigjawoi;gjawg awpgj awo;gj awo;gj  afgajoigjawoi;gjawg awpgj awo;gj awo;gj  afgajoigjawoi;gjawg awpgj awo;gj awo;gj "
-            ),
-            Entry(
-                "Nowy rok, nowy ja",
-                LocalDate.of(2024, 1, 12),
-                "afgajoigjawoi;gjawg awpgj awo;gj awo;gj "
-            )
-        )
+    suspend fun getEntries(): HttpResponse {
+        return client.get("diary-pages") {
+            contentType(ContentType.Application.Json)
+        }
+    }
+
+    suspend fun getEntry(id: Int): HttpResponse {
+        return client.get("diary-pages/$id") {
+            contentType(ContentType.Application.Json)
+        }
+    }
+
+    suspend fun postEntry(entryDTO: EntryDTO): HttpResponse {
+        return client.post("diary-pages") {
+            contentType(ContentType.Application.Json)
+            setBody(entryDTO)
+        }
+    }
+
+    suspend fun putEntry(entryDTO: EntryDTO): HttpResponse {
+        return client.put("diary-pages/${entryDTO.id}") {
+            contentType(ContentType.Application.Json)
+            setBody(entryDTO)
+        }
+    }
+
+    suspend fun deleteEntry(id: Int): HttpResponse {
+        return client.delete("diary-pages/$id") {
+            contentType(ContentType.Application.Json)
+        }
     }
 }
 

@@ -1,6 +1,5 @@
 package com.example.safediary.login.pin_login
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safediary.Constants
@@ -43,7 +42,7 @@ class PinLoginViewModel(private val appService: AppService, private val sharedPr
                         sharedPreferencesHelper.token = result.headers[Constants.AUTHORIZATION_HEADER]
                         pinChannel.send(SuccessfulLoginEvent)
                     } catch (e: HttpRequestException) {
-                        Log.e(this@PinLoginViewModel.javaClass.name, e.errorMessage)
+                        e.printStackTrace()
                         pinChannel.send(UnsuccessfulLoginEvent)
                     }
                 }

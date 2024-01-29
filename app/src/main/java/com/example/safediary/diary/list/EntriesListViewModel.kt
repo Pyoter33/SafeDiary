@@ -3,6 +3,7 @@ package com.example.safediary.diary.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safediary.network.AppService
+import com.example.safediary.utils.toBodyOrError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,6 +11,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class EntriesListViewModel(private val appService: AppService) : ViewModel() {
 
@@ -31,7 +34,7 @@ class EntriesListViewModel(private val appService: AppService) : ViewModel() {
 
             is EntryClickedEvent -> {
                 viewModelScope.launch {
-                    _listEntriesChannel.send(NavigateToDetailsUIEvent(event.entry))
+                    _listEntriesChannel.send(NavigateToDetailsUIEvent(event.id))
                 }
             }
 
@@ -49,11 +52,26 @@ class EntriesListViewModel(private val appService: AppService) : ViewModel() {
                     _listState.update { state ->
                         state.copy(isLoading = true)
                     }
-                    val newEntries = appService.getEntries()
-                    entries = newEntries.sortedByDescending { it.date }
+                    val result = appService.getEntries().toBodyOrError<GetEntriesResult>()
+                    entries = result.list.map {
+                        Entry(
+                            it.id,
+                            it.title,
+                            LocalDate.parse(
+                                it.creationDate, DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                            ),
+                            it.content
+                        )
+                    }.sortedByDescending { it.date }
                     _listState.update { state ->
                         state.copy(entries = entries, isLoading = false)
                     }
+                }
+            }
+
+            FaceClickedEvent -> {
+                viewModelScope.launch {
+                    _listEntriesChannel.send(NavigateToFaceRegisterUIEvent)
                 }
             }
         }
@@ -64,9 +82,11 @@ class EntriesListViewModel(private val appService: AppService) : ViewModel() {
 sealed class EntriesListEvent
 data class FilterChangedEvent(val content: String) : EntriesListEvent()
 data object AddClickedEvent : EntriesListEvent()
-data class EntryClickedEvent(val entry: Entry) : EntriesListEvent()
+data class EntryClickedEvent(val id: Int) : EntriesListEvent()
 data object GetEntriesEvent : EntriesListEvent()
+data object FaceClickedEvent : EntriesListEvent()
 
 sealed class EntriesListUIEvent
 data object NavigateToCreationUIEvent : EntriesListUIEvent()
-data class NavigateToDetailsUIEvent(val entry: Entry) : EntriesListUIEvent()
+data class NavigateToDetailsUIEvent(val id: Int) : EntriesListUIEvent()
+data object NavigateToFaceRegisterUIEvent : EntriesListUIEvent()

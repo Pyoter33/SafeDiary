@@ -3,11 +3,14 @@ package com.example.safediary.diary.create_edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.safediary.Constants.ARG_ENTRY_CONTENT
-import com.example.safediary.Constants.ARG_ENTRY_DATE
-import com.example.safediary.Constants.ARG_ENTRY_TITLE
+import com.example.safediary.Constants
 import com.example.safediary.Constants.DATE_PATTERN
+import com.example.safediary.Constants.DEFAULT_INT_ARG
+import com.example.safediary.diary.list.EntryDTO
+import com.example.safediary.diary.list.GetEntryResult
 import com.example.safediary.network.AppService
+import com.example.safediary.utils.toBodyOrError
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,18 +20,12 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-class CreateEditEntryViewModel(appService: AppService, savedStateHandle: SavedStateHandle): ViewModel() {
+class CreateEditEntryViewModel(private val appService: AppService, savedStateHandle: SavedStateHandle): ViewModel() {
 
-    private val argTitle by lazy { savedStateHandle.get<String>(ARG_ENTRY_TITLE) }
-    private val argDate by lazy { savedStateHandle.get<String>(ARG_ENTRY_DATE)?.let { LocalDate.parse(it, DateTimeFormatter.ofPattern(DATE_PATTERN)) } }
-    private val argContent by lazy { savedStateHandle.get<String>(ARG_ENTRY_CONTENT) }
+    private val argId by lazy { savedStateHandle.get<Int>(Constants.ARG_ENTRY_ID).takeIf { it != DEFAULT_INT_ARG } }
 
     private val _createEditEntryState = MutableStateFlow(
-        CreateEditEntryState(
-            argTitle ?: "",
-            argDate ?: LocalDate.now(),
-            argContent ?: ""
-        )
+        CreateEditEntryState()
     )
     val createEditEntryState = _createEditEntryState.asStateFlow()
 
@@ -38,18 +35,34 @@ class CreateEditEntryViewModel(appService: AppService, savedStateHandle: SavedSt
     fun onEvent(event: CreateEditEntryEvent) {
         when (event) {
             CreateClickedEvent -> {
+                _createEditEntryState.update {  state ->
+                    state.copy(isLoading = true)
+                }
                 val currentState = createEditEntryState.value
                 if (currentState.content.isEmpty() || currentState.title.isEmpty()) {
                     viewModelScope.launch {
                         _createEditEntryChannel.send(DataNotFilledUIEvent)
-
                     }
                     return
                 }
+                val entryDTO = EntryDTO(0, currentState.title, currentState.date.format(
+                    DateTimeFormatter.ofPattern(DATE_PATTERN)), currentState.content)
 
-                // create new entry
-                viewModelScope.launch {
-                    _createEditEntryChannel.send(EntryAddedUIEvent)
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        argId?.let { id ->
+                            appService.putEntry(entryDTO.copy(id = id)).toBodyOrError<Unit>()
+                        } ?: run {
+                            appService.postEntry(entryDTO).toBodyOrError<Unit>()
+                        }
+                        _createEditEntryChannel.send(EntryAddedUIEvent)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        _createEditEntryChannel.send(SomethingWentWrongCreateUIEvent)
+                    }
+                    _createEditEntryState.update {  state ->
+                        state.copy(isLoading = false)
+                    }
                 }
             }
             is DateChangedEvent -> {
@@ -83,6 +96,37 @@ class CreateEditEntryViewModel(appService: AppService, savedStateHandle: SavedSt
                     }
                 }
             }
+
+            GetDataCreateEvent -> {
+                _createEditEntryState.update {  state ->
+                    state.copy(isLoading = true)
+                }
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        val id = argId ?: throw IllegalStateException()
+                        val entry = appService.getEntry(id).toBodyOrError<GetEntryResult>()
+                        _createEditEntryState.update { state ->
+                            with(entry.obj) {
+                                state.copy(
+                                    id = id,
+                                    title = title,
+                                    date = LocalDate.parse(
+                                        creationDate,
+                                        DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                                    ),
+                                    content = content
+                                )
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        _createEditEntryChannel.send(SomethingWentWrongCreateUIEvent)
+                    }
+                    _createEditEntryState.update {  state ->
+                        state.copy(isLoading = false)
+                    }
+                }
+            }
         }
 
     }
@@ -95,7 +139,9 @@ data class TitleChangedEvent(val title: String): CreateEditEntryEvent()
 data class DateChangedEvent(val date: LocalDate): CreateEditEntryEvent()
 data class VoiceListeningChanged(val isListening: Boolean): CreateEditEntryEvent()
 data object CreateClickedEvent: CreateEditEntryEvent()
+data object GetDataCreateEvent: CreateEditEntryEvent()
 
 sealed class CreateEditEntryUIEvent
 data object EntryAddedUIEvent: CreateEditEntryUIEvent()
 data object DataNotFilledUIEvent: CreateEditEntryUIEvent()
+data object SomethingWentWrongCreateUIEvent: CreateEditEntryUIEvent()

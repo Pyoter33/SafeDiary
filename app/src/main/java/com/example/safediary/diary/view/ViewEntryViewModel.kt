@@ -4,10 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safediary.Constants
-import com.example.safediary.Constants.ARG_ENTRY_CONTENT
-import com.example.safediary.Constants.ARG_ENTRY_DATE
-import com.example.safediary.Constants.ARG_ENTRY_TITLE
+import com.example.safediary.diary.list.GetEntryResult
 import com.example.safediary.network.AppService
+import com.example.safediary.utils.toBodyOrError
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,27 +17,11 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-class ViewEntryViewModel(appService: AppService, savedStateHandle: SavedStateHandle) : ViewModel() {
+class ViewEntryViewModel(private val appService: AppService, savedStateHandle: SavedStateHandle) : ViewModel() {
 
-    private val argTitle by lazy { savedStateHandle.get<String>(ARG_ENTRY_TITLE) }
-    private val argDate by lazy {
-        savedStateHandle.get<String>(ARG_ENTRY_DATE)?.let {
-            LocalDate.parse(
-                it, DateTimeFormatter.ofPattern(
-                    Constants.DATE_PATTERN
-                )
-            )
-        }
-    }
-    private val argContent by lazy { savedStateHandle.get<String>(ARG_ENTRY_CONTENT) }
+    private val argId by lazy { savedStateHandle.get<Int>(Constants.ARG_ENTRY_ID) }
 
-    private val _viewEntryState = MutableStateFlow(
-        ViewEntryState(
-            argTitle ?: "Title",
-            argDate ?: LocalDate.of(2024, 11, 24),
-            argContent ?: "Some text"
-        )
-    )
+    private val _viewEntryState = MutableStateFlow(ViewEntryState())
     val viewEntryStateFlow = _viewEntryState.asStateFlow()
 
     private val _viewEntryChannel = Channel<ViewEntryUIEvent>()
@@ -53,11 +37,20 @@ class ViewEntryViewModel(appService: AppService, savedStateHandle: SavedStateHan
 
             DeleteConfirmedEvent -> {
                 _viewEntryState.update { state ->
-                    state.copy(deleteDialogVisible = false)
+                    state.copy(deleteDialogVisible = false, isLoading = true)
                 }
-                viewModelScope.launch {
-                    //delete
-                    _viewEntryChannel.send(NavigateBackEvent)
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        val id = argId ?: throw IllegalStateException()
+                        appService.deleteEntry(id).toBodyOrError<Unit>()
+                        _viewEntryChannel.send(NavigateBackEvent)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        _viewEntryChannel.send(SomethingWentWrongUIEvent)
+                    }
+                    _viewEntryState.update { state ->
+                        state.copy(isLoading = false)
+                    }
                 }
             }
 
@@ -69,7 +62,38 @@ class ViewEntryViewModel(appService: AppService, savedStateHandle: SavedStateHan
 
             EditClickedEvent -> {
                 viewModelScope.launch {
-                    _viewEntryChannel.send(NavigateToEditEvent(viewEntryStateFlow.value))
+                    _viewEntryChannel.send(NavigateToEditEvent(viewEntryStateFlow.value.id))
+                }
+            }
+
+            GetDataEvent -> {
+                _viewEntryState.update {  state ->
+                    state.copy(isLoading = true)
+                }
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        val id = argId ?: throw IllegalStateException()
+                        val entry = appService.getEntry(id).toBodyOrError<GetEntryResult>()
+                        _viewEntryState.update { state ->
+                            with(entry.obj) {
+                                state.copy(
+                                    id = id,
+                                    title = title,
+                                    date = LocalDate.parse(
+                                        creationDate,
+                                        DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                                    ),
+                                    content = content
+                                )
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        _viewEntryChannel.send(SomethingWentWrongUIEvent)
+                    }
+                    _viewEntryState.update { state ->
+                        state.copy(isLoading = false)
+                    }
                 }
             }
         }
@@ -81,7 +105,9 @@ data object EditClickedEvent : ViewEntryEvent()
 data object DeleteClickedEvent : ViewEntryEvent()
 data object DeleteConfirmedEvent : ViewEntryEvent()
 data object DeleteRejectedEvent : ViewEntryEvent()
+data object GetDataEvent : ViewEntryEvent()
 
 sealed class ViewEntryUIEvent
 data object NavigateBackEvent : ViewEntryUIEvent()
-data class NavigateToEditEvent(val state: ViewEntryState) : ViewEntryUIEvent()
+data class NavigateToEditEvent(val id: Int) : ViewEntryUIEvent()
+data object SomethingWentWrongUIEvent : ViewEntryUIEvent()
