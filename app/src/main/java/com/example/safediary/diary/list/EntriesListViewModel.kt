@@ -52,19 +52,26 @@ class EntriesListViewModel(private val appService: AppService) : ViewModel() {
                     _listState.update { state ->
                         state.copy(isLoading = true)
                     }
-                    val result = appService.getEntries().toBodyOrError<GetEntriesResult>()
-                    entries = result.list.map {
-                        Entry(
-                            it.id,
-                            it.title,
-                            LocalDate.parse(
-                                it.creationDate, DateTimeFormatter.ISO_LOCAL_DATE_TIME
-                            ),
-                            it.content
-                        )
-                    }.sortedByDescending { it.date }
-                    _listState.update { state ->
-                        state.copy(entries = entries, isLoading = false)
+                    try {
+                        val result = appService.getEntries().toBodyOrError<GetEntriesResult>()
+                        entries = result.list.map {
+                            Entry(
+                                it.id,
+                                it.title,
+                                LocalDate.parse(
+                                    it.creationDate, DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                                ),
+                                it.content
+                            )
+                        }.sortedByDescending { it.date }
+                        _listState.update { state ->
+                            state.copy(entries = entries, isLoading = false)
+                        }
+                    } catch (e: Exception) {
+                        _listEntriesChannel.send(ShowSomethingWentWrongListUIEvent)
+                        _listState.update { state ->
+                            state.copy(isLoading = false)
+                        }
                     }
                 }
             }
@@ -90,3 +97,4 @@ sealed class EntriesListUIEvent
 data object NavigateToCreationUIEvent : EntriesListUIEvent()
 data class NavigateToDetailsUIEvent(val id: Int) : EntriesListUIEvent()
 data object NavigateToFaceRegisterUIEvent : EntriesListUIEvent()
+data object ShowSomethingWentWrongListUIEvent : EntriesListUIEvent()

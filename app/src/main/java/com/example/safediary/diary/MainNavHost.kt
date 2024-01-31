@@ -55,6 +55,7 @@ import com.example.safediary.diary.list.GetEntriesEvent
 import com.example.safediary.diary.list.NavigateToCreationUIEvent
 import com.example.safediary.diary.list.NavigateToDetailsUIEvent
 import com.example.safediary.diary.list.NavigateToFaceRegisterUIEvent
+import com.example.safediary.diary.list.ShowSomethingWentWrongListUIEvent
 import com.example.safediary.diary.view.DeleteClickedEvent
 import com.example.safediary.diary.view.EditClickedEvent
 import com.example.safediary.diary.view.GetDataEvent
@@ -273,6 +274,7 @@ fun MainNavHost(
             }
 
             composable(ROUTE_ENTRY_LIST) {
+                val context = LocalContext.current
                 val lifecycleOwner = LocalLifecycleOwner.current
                 val viewModel: EntriesListViewModel = koinViewModel()
                 val state by viewModel.listStateFlow.collectAsState()
@@ -296,6 +298,10 @@ fun MainNavHost(
 
                             NavigateToFaceRegisterUIEvent -> {
                                 navController.navigate(ROUTE_FACE_REGISTER)
+                            }
+
+                            ShowSomethingWentWrongListUIEvent -> {
+                                Toast.makeText(context, R.string.something_went_wrong, Toast.LENGTH_SHORT).show()
                             }
                         }
                     }

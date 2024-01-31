@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.safediary.Constants
 import com.example.safediary.dto.FaceLoginDto
 import com.example.safediary.network.AppService
 import com.example.safediary.utils.HttpRequestException
@@ -78,7 +79,9 @@ class FaceLoginRegisterViewModel(
             val imageBase64 = generateBase64String(image)
             val appId = sharedPreferencesHelper.appId!!
             try {
-                appService.loginWithFace(FaceLoginDto(appId, imageBase64)).toBodyOrError<Unit>()
+                val result = appService.loginWithFace(FaceLoginDto(appId, imageBase64))
+                result.toBodyOrError<Unit>()
+                sharedPreferencesHelper.token = result.headers[Constants.AUTHORIZATION_HEADER]
                 loginChannel.send(SuccessfulLoginUIEvent)
             } catch (e: HttpRequestException) {
                 e.printStackTrace()
