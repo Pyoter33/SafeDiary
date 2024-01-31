@@ -5,16 +5,12 @@ import com.example.safediary.dto.FaceLoginDto
 import com.example.safediary.dto.PinLoginDto
 import io.ktor.client.HttpClient
 import io.ktor.client.request.delete
-import io.ktor.client.request.forms.formData
-import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
-import io.ktor.http.Headers
-import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,14 +19,18 @@ class AppService(private val client: HttpClient) {
 
     suspend fun registerWithFace(faceLoginDto: FaceLoginDto): HttpResponse =
         withContext(Dispatchers.IO) {
-            return@withContext client.submitFormWithBinaryData(url = "users/update",
-                formData = formData {
-                    append("face-image", faceLoginDto.faceImageBytes, Headers.build {
-                        append(HttpHeaders.ContentDisposition, "filename=face-image")
-                    })
-                    append("uuid", faceLoginDto.uuid)
-                }
-            )
+            return@withContext client.post("users/update") {
+                contentType(ContentType.Application.Json)
+                setBody(faceLoginDto)
+            }
+        }
+
+    suspend fun loginWithFace(faceLoginDto: FaceLoginDto): HttpResponse =
+        withContext(Dispatchers.IO) {
+            return@withContext client.post("users/login") {
+                contentType(ContentType.Application.Json)
+                setBody(faceLoginDto)
+            }
         }
 
     suspend fun registerWithPin(pinLoginDto: PinLoginDto): HttpResponse {

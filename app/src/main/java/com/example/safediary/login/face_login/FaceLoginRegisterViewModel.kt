@@ -1,6 +1,7 @@
 package com.example.safediary.login.face_login
 
 import android.graphics.Bitmap
+import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safediary.dto.FaceLoginDto
@@ -15,9 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.nio.ByteBuffer
-import kotlin.io.encoding.ExperimentalEncodingApi
-
+import java.io.ByteArrayOutputStream
 
 class FaceLoginRegisterViewModel(
     private val sharedPreferencesHelper: SharedPreferencesHelper,
@@ -64,22 +63,22 @@ class FaceLoginRegisterViewModel(
         }
     }
 
-    private fun generateByteArray(image: Bitmap): ByteArray {
-        val byteBuffer = ByteBuffer.allocate(image.byteCount)
-        image.copyPixelsToBuffer(byteBuffer)
-        byteBuffer.rewind()
-        return byteBuffer.array()
+    private fun generateBase64String(image: Bitmap): String {
+        val baos = ByteArrayOutputStream()
+        image.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+        val b = baos.toByteArray()
+        return Base64.encodeToString(b, Base64.NO_WRAP)
     }
 
-    @OptIn(ExperimentalEncodingApi::class)
     private fun loginWithFace(image: Bitmap) {
         _loginState.update { state ->
             state.copy(canScan = false, numberOfScans = state.numberOfScans + 1)
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val byteArray = generateByteArray(image)
+            val imageBase64 = generateBase64String(image)
             val appId = sharedPreferencesHelper.appId!!
             try {
+                appService.loginWithFace(FaceLoginDto(appId, imageBase64)).toBodyOrError<Unit>()
                 loginChannel.send(SuccessfulLoginUIEvent)
             } catch (e: HttpRequestException) {
                 e.printStackTrace()
@@ -99,10 +98,10 @@ class FaceLoginRegisterViewModel(
             state.copy(canScan = false)
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val byteArray = generateByteArray(image)
+            val imageBase64 = generateBase64String(image)
             val appId = sharedPreferencesHelper.appId!!
             try {
-                appService.registerWithFace(FaceLoginDto(appId, byteArray)).toBodyOrError<Unit>()
+                appService.registerWithFace(FaceLoginDto(appId, imageBase64)).toBodyOrError<Unit>()
                 registerChannel.send(SuccessfulRegisterUIEvent)
             } catch (e: HttpRequestException) {
                 e.printStackTrace()
@@ -113,7 +112,7 @@ class FaceLoginRegisterViewModel(
 
     companion object {
         private const val MAX_NUMBER_OF_LOGIN_TRIES = 3
-        private const val FACE_POSITIONING_DELAY = 5000L
+        private const val FACE_POSITIONING_DELAY = 3000L
     }
 }
 

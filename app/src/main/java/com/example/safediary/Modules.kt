@@ -41,6 +41,7 @@ val appModule = module {
             install(ContentNegotiation) {
                 gson {
                     setPrettyPrinting()
+                    disableHtmlEscaping()
                 }
             }
         }
