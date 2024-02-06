@@ -1,8 +1,8 @@
 package com.example.safediary.network
 
-import com.example.safediary.diary.list.EntryDTO
 import com.example.safediary.dto.FaceLoginDto
 import com.example.safediary.dto.PinLoginDto
+import com.example.safediary.ui.diary.list.EntryDTO
 import io.ktor.client.HttpClient
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
